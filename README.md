@@ -8,6 +8,9 @@ way DeepSeek intended.*
 👉 **Live calculator (GitHub Pages):**\
 https://codestar12.github.io/llm-hparam-flop-calculator/
 
+Link to Blog:
+https://cod3star.substack.com/p/acceptable-hyperparamters-and-how
+
 ------------------------------------------------------------------------
 
 ## ⭐️ Overview
