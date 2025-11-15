@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compute-Optimal Model Scaling Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 1100px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .mode-toggle {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 30px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .mode-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .baseline-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .baseline-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+        
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 0;
+        }
+        
+        .input-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .help-text {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .baseline-result {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+        }
+        
+        .baseline-result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .baseline-result-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .baseline-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .baseline-value {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .param-breakdown {
+            background: #f0f4ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .breakdown-label {
+            color: #666;
+        }
+        
+        .breakdown-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .batch-size-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .batch-size-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+        
+        .context-group {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .context-header {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.05em;
+        }
+        
+        .batch-option {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .batch-option-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .batch-option-title {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .batch-option-accuracy {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .batch-option-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .node-list {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 3px;
+        }
+        
+        .power-indicator {
+            margin-left: 5px;
+        }
+        
+        .suggested-configs {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .config-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .config-item {
+            padding: 15px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf6 100%);
+            border-radius: 8px;
+        }
+        
+        .config-main {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .config-hyperparams {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .config-value {
+            text-align: center;
+        }
+        
+        .config-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .config-number {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .alternatives-section {
+            margin-top: 30px;
+        }
+        
+        .alternatives-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .model-sizes-input {
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .model-sizes-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .model-sizes-text {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            transition: transform 0.3s;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .model-size {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .tokens-value {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .tokens-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .comparison {
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .comparison-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        
+        .comparison-label {
+            color: #666;
+        }
+        
+        .comparison-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .hyperparams-section {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .hyperparam-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            margin-bottom: 3px;
+        }
+        
+        .hyperparam-label {
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .hyperparam-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .formula {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .formula h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .formula-text {
+            font-family: 'Courier New', monospace;
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 0.9em;
+            color: #856404;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Compute-Optimal Model Scaling</h1>
+        <p class="subtitle">Precision FLOP calculations with DeepSeek methodology</p>
+        
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="paramsToFlops">Parameters → FLOPs</button>
+            <button class="mode-btn" id="flopsToParams">FLOPs → Parameters</button>
+        </div>
+        
+        <!-- Mode 1: Parameters to FLOPs -->
+        <div id="mode1" class="mode-content">
+            <div class="baseline-section">
+                <div class="baseline-title">Baseline Model Configuration</div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="baseParams">Total Model Parameters</label>
+                        <input type="text" id="baseParams" placeholder="e.g., 500M, 1B, 7B" value="500M">
+                        <div class="help-text">Total parameters including embeddings</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="baseTokens">Training Tokens</label>
+                        <input type="text" id="baseTokens" placeholder="e.g., 100B, 500B, 1T" value="500B">
+                        <div class="help-text">Use B for billions, T for trillions</div>
+                    </div>
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="hiddenDim">Hidden Dimension</label>
+                        <input type="text" id="hiddenDim" placeholder="e.g., 1024, 4096, 8192" value="1024">
+                        <div class="help-text">Model hidden size (d_model). Common: 1024 (small), 2048 (1B), 4096 (7B), 8192 (70B)</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="tiedEmbeddings">Embedding Type</label>
+                        <select id="tiedEmbeddings" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em;">
+                            <option value="false">Separate Input/Output (2x)</option>
+                            <option value="true" selected>Tied Embeddings (1x)</option>
+                        </select>
+                        <div class="help-text">Most modern models use tied embeddings</div>
+                    </div>
+                </div>
+                
+                <div class="baseline-result">
+                    <div class="param-breakdown">
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Total Parameters:</span>
+                            <span class="breakdown-value" id="totalParams">-</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Embedding Parameters (Llama 3 vocab):</span>
+                            <span class="breakdown-value" id="embeddingParams">-</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Non-Embedding Parameters:</span>
+                            <span class="breakdown-value" id="nonEmbeddingParams">-</span>
+                        </div>
+                    </div>
+                    <div class="baseline-result-row" style="margin-top: 15px;">
+                        <span class="baseline-label">Training FLOPs (DeepSeek formula):</span>
+                        <span class="baseline-value" id="totalFlops">-</span>
+                    </div>
+                    <div class="baseline-result-row">
+                        <span class="baseline-label">Optimal Learning Rate:</span>
+                        <span class="baseline-value" id="baselineLR">-</span>
+                    </div>
+                    <div class="baseline-result-row">
+                        <span class="baseline-label">Optimal Batch Size:</span>
+                        <span class="baseline-value" id="baselineBatch">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alternatives-section">
+                <div class="alternatives-title">Alternative Model Configurations</div>
+                
+                <div class="model-sizes-input">
+                    <label class="model-sizes-label" for="modelSizes">Model sizes to compare (comma-separated):</label>
+                    <input type="text" id="modelSizes" class="model-sizes-text" placeholder="e.g., 3B, 5B, 8B, 15B" value="3B, 5B, 8B">
+                    <div class="help-text">Enter total parameter counts (including embeddings)</div>
+                </div>
+                
+                <div class="results-grid" id="resultsGrid">
+                    <!-- Results will be dynamically inserted here -->
+                </div>
+            </div>
+            
+            <div class="batch-size-section" id="batchSizeSuggestions1">
+                <!-- Batch size suggestions will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- Mode 2: FLOPs to Parameters -->
+        <div id="mode2" class="mode-content hidden">
+            <div class="baseline-section">
+                <div class="baseline-title">Compute Budget</div>
+                <div class="input-row">
+                    <div class="input-group full-width">
+                        <label for="targetFlops">Total Training FLOPs</label>
+                        <input type="text" id="targetFlops" placeholder="e.g., 1e21, 5e22, 1.5e21" value="1.5e21">
+                        <div class="help-text">Use scientific notation (e.g., 1e21 for 10²¹ FLOPs)</div>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    ⚠️ Note: Parameter suggestions below are for non-embedding parameters only. 
+                    Add embedding params based on your model's hidden dimension and embedding type.
+                    Typical: ~131M (1024 hidden), ~525M (4096 hidden), ~1.05B (8192 hidden) for tied embeddings.
+                </div>
+                
+                <div class="baseline-result">
+                    <div class="baseline-result-row">
+                        <span class="baseline-label">Optimal Learning Rate:</span>
+                        <span class="baseline-value" id="targetLR">-</span>
+                    </div>
+                    <div class="baseline-result-row">
+                        <span class="baseline-label">Optimal Batch Size:</span>
+                        <span class="baseline-value" id="targetBatch">-</span>
+                    </div>
+                </div>
+                
+                <div class="suggested-configs">
+                    <div class="baseline-label" style="margin-bottom: 10px;">Compute-Optimal Configurations:</div>
+                    <div class="config-grid" id="optimalConfigs">
+                        <!-- Optimal configs will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alternatives-section">
+                <div class="alternatives-title">Custom Token/Parameter Ratios</div>
+                
+                <div class="model-sizes-input">
+                    <label class="model-sizes-label" for="tokenRatios">Tokens per parameter ratios (comma-separated):</label>
+                    <input type="text" id="tokenRatios" class="model-sizes-text" placeholder="e.g., 20, 50, 100, 200" value="20, 50, 100, 200">
+                    <div class="help-text">Chinchilla-optimal is ~20 tokens/param. Higher = smaller model with more data</div>
+                </div>
+                
+                <div class="results-grid" id="customConfigsGrid">
+                    <!-- Custom configs will be inserted here -->
+                </div>
+            </div>
+            
+            <div class="batch-size-section" id="batchSizeSuggestions2">
+                <!-- Batch size suggestions will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="formula">
+            <h3>DeepSeek Precision Formulas</h3>
+            <div class="formula-text">
+                <strong>Model Architecture (Llama 3 tokenizer):</strong><br>
+                &nbsp;&nbsp;Vocab size = 128,256 tokens<br>
+                &nbsp;&nbsp;Tied embeddings: params = vocab_size × hidden_dim<br>
+                &nbsp;&nbsp;Separate embeddings: params = vocab_size × hidden_dim × 2<br>
+                &nbsp;&nbsp;Non-embedding params = total_params - embedding_params<br>
+                <br>
+                <strong>Training FLOPs (DeepSeek method):</strong><br>
+                &nbsp;&nbsp;M = 2 × non_embedding_params (FLOPs per token)<br>
+                &nbsp;&nbsp;C = M × D × 3 = 6 × non_embedding_params × tokens<br>
+                <br>
+                <strong>Hyperparameter Scaling:</strong><br>
+                &nbsp;&nbsp;η_opt = 0.3118 × C^(-0.1250) (learning rate)<br>
+                &nbsp;&nbsp;B_opt = 0.2920 × C^(0.3271) (batch size in tokens)<br>
+                <br>
+                <strong>Global Batch Sizes:</strong><br>
+                &nbsp;&nbsp;Sequences = B_opt / context_length<br>
+                &nbsp;&nbsp;Shows power-of-2 and highly divisible options<br>
+                &nbsp;&nbsp;Node counts shown for data parallel scaling (8 GPUs per node)<br>
+                &nbsp;&nbsp;Micro-batch sizes = sequences_per_GPU / gradient_accumulation_steps
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Constants for Llama 3 tokenizer
+        const VOCAB_SIZE = 128256;
+        
+        function calculateEmbeddingParams(hiddenDim, tiedEmbeddings) {
+            // If tied: vocab_size × hidden_dim (shared input/output)
+            // If not tied: vocab_size × hidden_dim × 2 (separate input/output)
+            return VOCAB_SIZE * hiddenDim * (tiedEmbeddings ? 1 : 2);
+        }
+        
+        // Mode switching
+        const mode1Btn = document.getElementById('paramsToFlops');
+        const mode2Btn = document.getElementById('flopsToParams');
+        const mode1Content = document.getElementById('mode1');
+        const mode2Content = document.getElementById('mode2');
+        
+        mode1Btn.addEventListener('click', () => {
+            mode1Btn.classList.add('active');
+            mode2Btn.classList.remove('active');
+            mode1Content.classList.remove('hidden');
+            mode2Content.classList.add('hidden');
+        });
+        
+        mode2Btn.addEventListener('click', () => {
+            mode2Btn.classList.add('active');
+            mode1Btn.classList.remove('active');
+            mode2Content.classList.remove('hidden');
+            mode1Content.classList.add('hidden');
+            calculateMode2();
+        });
+        
+        function parseNumber(str) {
+            if (!str) return 0;
+            str = str.toString().trim().toUpperCase();
+            
+            // Check for scientific notation
+            if (str.includes('E')) {
+                return parseFloat(str);
+            }
+            
+            let multiplier = 1;
+            if (str.endsWith('T')) {
+                multiplier = 1e12;
+                str = str.slice(0, -1);
+            } else if (str.endsWith('B')) {
+                multiplier = 1e9;
+                str = str.slice(0, -1);
+            } else if (str.endsWith('M')) {
+                multiplier = 1e6;
+                str = str.slice(0, -1);
+            } else if (str.endsWith('K')) {
+                multiplier = 1e3;
+                str = str.slice(0, -1);
+            }
+            
+            return parseFloat(str) * multiplier;
+        }
+        
+        function formatNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return num.toFixed(2);
+        }
+        
+        function formatFlops(num) {
+            return num.toExponential(2) + ' FLOPs';
+        }
+        
+        // DeepSeek scaling laws for hyperparameters
+        function calculateOptimalLR(flops) {
+            return 0.3118 * Math.pow(flops, -0.1250);
+        }
+        
+        function calculateOptimalBatchSize(flops) {
+            return 0.2920 * Math.pow(flops, 0.3271);
+        }
+        
+        // Find power of 2 options (both above and below)
+        function findPowerOf2Options(optimalSequences) {
+            const lower = Math.pow(2, Math.floor(Math.log2(optimalSequences)));
+            const upper = Math.pow(2, Math.ceil(Math.log2(optimalSequences)));
+            return { lower, upper };
+        }
+        
+        // Find highly divisible batch sizes
+        function findHighlyDivisible(optimalSequences, contextLength, optimalTokens) {
+            const candidates = [];
+            const minSeq = Math.floor(optimalSequences * 0.7);
+            const maxSeq = Math.ceil(optimalSequences * 1.3);
+            
+            for (let seq = minSeq; seq <= maxSeq; seq++) {
+                // Must be divisible by 8 (minimum GPU count for 1 node)
+                if (seq % 8 !== 0) continue;
+                
+                // Count valid node configurations (check if divisible by nodes * 8)
+                const validNodes = [];
+                for (let nodes = 1; nodes <= 32; nodes++) {
+                    const gpus = nodes * 8;
+                    if (seq % gpus === 0) validNodes.push(nodes);
+                }
+                
+                // Score based on proximity to optimal and number of valid node configs
+                const accuracy = seq * contextLength / optimalTokens * 100;
+                const proximityScore = 1 - Math.abs(seq - optimalSequences) / optimalSequences;
+                const divisorScore = validNodes.length / 32;
+                const totalScore = proximityScore * 0.7 + divisorScore * 0.3;
+                
+                candidates.push({
+                    sequences: seq,
+                    tokens: seq * contextLength,
+                    validNodes: validNodes,
+                    accuracy: accuracy,
+                    score: totalScore
+                });
+            }
+            
+            // Sort by score and return top 3
+            return candidates.sort((a, b) => b.score - a.score).slice(0, 3);
+        }
+        
+        // Generate batch size suggestions HTML
+        function generateBatchSizeSuggestions(optimalTokens) {
+            const contextLengths = [4096, 8192];
+            let html = '<div class="batch-size-title">Global Batch Size Suggestions</div>';
+            
+            contextLengths.forEach(contextLength => {
+                const optimalSequences = optimalTokens / contextLength;
+                const power2 = findPowerOf2Options(optimalSequences);
+                const highlyDivisible = findHighlyDivisible(optimalSequences, contextLength, optimalTokens);
+                
+                html += `
+                    <div class="context-group">
+                        <div class="context-header">Context Length: ${contextLength.toLocaleString()} tokens</div>
+                        <div class="batch-option">
+                            <div class="batch-option-header">
+                                <span class="batch-option-title">Optimal</span>
+                                <span class="batch-option-accuracy">100%</span>
+                            </div>
+                            <div class="batch-option-details">
+                                ${Math.round(optimalSequences).toLocaleString()} sequences (${formatNumber(optimalTokens)} tokens)
+                            </div>
+                        </div>
+                        
+                        <div class="batch-option">
+                            <div class="batch-option-header">
+                                <span class="batch-option-title">Power of 2 Options</span>
+                            </div>
+                            <div class="batch-option-details">
+                                ${power2.lower} sequences (${formatNumber(power2.lower * contextLength)} tokens, ${(power2.lower / optimalSequences * 100).toFixed(1)}%) 
+                                <span class="power-indicator">↓ Conservative</span><br>
+                                ${power2.upper} sequences (${formatNumber(power2.upper * contextLength)} tokens, ${(power2.upper / optimalSequences * 100).toFixed(1)}%) 
+                                <span class="power-indicator">↑ Aggressive</span>
+                            </div>
+                        </div>
+                        
+                        <div class="batch-option">
+                            <div class="batch-option-header">
+                                <span class="batch-option-title">Highly Divisible Options</span>
+                            </div>
+                            ${highlyDivisible.map((option, idx) => {
+                                // Calculate valid micro batch sizes for nodes 3-10
+                                let microBatchInfo = [];
+                                for (let nodes = 3; nodes <= 10; nodes++) {
+                                    if (option.validNodes.includes(nodes)) {
+                                        const seqPerGPU = option.sequences / (nodes * 8);
+                                        // Find divisors of seqPerGPU (these are valid micro batch sizes)
+                                        const divisors = [];
+                                        for (let d = 1; d <= seqPerGPU && d <= 64; d++) {
+                                            if (seqPerGPU % d === 0) divisors.push(d);
+                                        }
+                                        microBatchInfo.push({
+                                            nodes: nodes,
+                                            seqPerGPU: seqPerGPU,
+                                            divisors: divisors
+                                        });
+                                    }
+                                }
+                                
+                                return `
+                                <div class="batch-option-details" style="${idx > 0 ? 'margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;' : ''}">
+                                    ${option.sequences} sequences (${formatNumber(option.tokens)} tokens, ${option.accuracy.toFixed(1)}%)
+                                    <div class="node-list">
+                                        Nodes: ${option.validNodes.join(', ')}
+                                    </div>
+                                    ${microBatchInfo.length > 0 ? `
+                                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dotted #ddd;">
+                                            <div style="font-size: 0.82em; color: #666; margin-bottom: 4px; font-weight: 600;">Micro-batch options (3-10 nodes):</div>
+                                            ${microBatchInfo.map(info => `
+                                                <div style="font-size: 0.82em; color: #777; margin-left: 10px; line-height: 1.4;">
+                                                    <span style="font-weight: 500;">${info.nodes} nodes:</span> ${info.seqPerGPU} seq/GPU → BS=[${info.divisors.join(', ')}]
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `}).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            return html;
+        }
+        
+        // Mode 1: Parameters to FLOPs
+        function calculateMode1() {
+            const totalParams = parseNumber(document.getElementById('baseParams').value);
+            const baseTokens = parseNumber(document.getElementById('baseTokens').value);
+            const hiddenDim = parseNumber(document.getElementById('hiddenDim').value) || 1024;
+            const tiedEmbeddings = document.getElementById('tiedEmbeddings').value === 'true';
+            
+            if (totalParams === 0 || baseTokens === 0) {
+                document.getElementById('totalParams').textContent = '-';
+                document.getElementById('embeddingParams').textContent = '-';
+                document.getElementById('nonEmbeddingParams').textContent = '-';
+                document.getElementById('totalFlops').textContent = '-';
+                document.getElementById('baselineLR').textContent = '-';
+                document.getElementById('baselineBatch').textContent = '-';
+                document.getElementById('batchSizeSuggestions1').innerHTML = '';
+                document.getElementById('resultsGrid').innerHTML = '<p style="color: #999;">Enter baseline configuration to see results</p>';
+                return;
+            }
+            
+            // Calculate parameter breakdown
+            const embeddingParams = calculateEmbeddingParams(hiddenDim, tiedEmbeddings);
+            const nonEmbeddingParams = totalParams - embeddingParams;
+            
+            // DeepSeek formula: C = 6 × non_embedding_params × tokens
+            const totalFlops = 6 * nonEmbeddingParams * baseTokens;
+            const optimalLR = calculateOptimalLR(totalFlops);
+            const optimalBatch = calculateOptimalBatchSize(totalFlops);
+            
+            // Update display
+            document.getElementById('totalParams').textContent = formatNumber(totalParams);
+            document.getElementById('embeddingParams').textContent = formatNumber(embeddingParams);
+            document.getElementById('nonEmbeddingParams').textContent = formatNumber(nonEmbeddingParams);
+            document.getElementById('totalFlops').textContent = formatFlops(totalFlops);
+            document.getElementById('baselineLR').textContent = optimalLR.toExponential(3);
+            document.getElementById('baselineBatch').textContent = formatNumber(optimalBatch) + ' tokens';
+            
+            // Generate batch size suggestions
+            document.getElementById('batchSizeSuggestions1').innerHTML = generateBatchSizeSuggestions(optimalBatch);
+            
+            // Calculate alternatives
+            const modelSizesInput = document.getElementById('modelSizes').value;
+            const modelSizes = modelSizesInput.split(',').map(s => {
+                const size = parseNumber(s.trim());
+                return {
+                    label: s.trim(),
+                    totalParams: size
+                };
+            }).filter(m => m.totalParams > 0);
+            
+            const resultsGrid = document.getElementById('resultsGrid');
+            resultsGrid.innerHTML = '';
+            
+            modelSizes.forEach(model => {
+                // Use same hidden dim and embedding type as baseline
+                const modelEmbeddingParams = calculateEmbeddingParams(hiddenDim, tiedEmbeddings);
+                const modelNonEmbeddingParams = model.totalParams - modelEmbeddingParams;
+                
+                // Calculate tokens for same FLOPs budget
+                const tokens = totalFlops / (6 * modelNonEmbeddingParams);
+                
+                const paramsRatio = modelNonEmbeddingParams / nonEmbeddingParams;
+                const tokensRatio = tokens / baseTokens;
+                
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                card.innerHTML = `
+                    <div class="model-size">${model.label} Model</div>
+                    <div style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
+                        Non-embedding: ${formatNumber(modelNonEmbeddingParams)}
+                    </div>
+                    <div class="tokens-value">${formatNumber(tokens)}</div>
+                    <div class="tokens-label">Training Tokens</div>
+                    <div class="comparison">
+                        <div class="comparison-item">
+                            <span class="comparison-label">Model Size:</span>
+                            <span class="comparison-value">${paramsRatio.toFixed(1)}× baseline</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span class="comparison-label">Token Budget:</span>
+                            <span class="comparison-value">${tokensRatio.toFixed(2)}× baseline</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span class="comparison-label">Tokens/Param:</span>
+                            <span class="comparison-value">${formatNumber(tokens/modelNonEmbeddingParams)}</span>
+                        </div>
+                    </div>
+                    <div class="hyperparams-section">
+                        <div class="hyperparam-row">
+                            <span class="hyperparam-label">Learning Rate:</span>
+                            <span class="hyperparam-value">${optimalLR.toExponential(2)}</span>
+                        </div>
+                        <div class="hyperparam-row">
+                            <span class="hyperparam-label">Batch Size:</span>
+                            <span class="hyperparam-value">${formatNumber(optimalBatch)}</span>
+                        </div>
+                    </div>
+                `;
+                resultsGrid.appendChild(card);
+            });
+        }
+        
+        // Mode 2: FLOPs to Parameters
+        function calculateMode2() {
+            const targetFlops = parseNumber(document.getElementById('targetFlops').value);
+            
+            if (targetFlops === 0) {
+                document.getElementById('targetLR').textContent = '-';
+                document.getElementById('targetBatch').textContent = '-';
+                document.getElementById('batchSizeSuggestions2').innerHTML = '';
+                document.getElementById('optimalConfigs').innerHTML = '<p style="color: #999;">Enter FLOP budget to see configurations</p>';
+                document.getElementById('customConfigsGrid').innerHTML = '';
+                return;
+            }
+            
+            const optimalLR = calculateOptimalLR(targetFlops);
+            const optimalBatch = calculateOptimalBatchSize(targetFlops);
+            
+            document.getElementById('targetLR').textContent = optimalLR.toExponential(3);
+            document.getElementById('targetBatch').textContent = formatNumber(optimalBatch) + ' tokens';
+            
+            // Generate batch size suggestions
+            document.getElementById('batchSizeSuggestions2').innerHTML = generateBatchSizeSuggestions(optimalBatch);
+            
+            // Calculate optimal configurations (using non-embedding params)
+            const optimalRatios = [20, 30, 10];
+            const optimalLabels = ['Chinchilla-Optimal', 'Conservative (30:1)', 'Aggressive (10:1)'];
+            
+            const optimalGrid = document.getElementById('optimalConfigs');
+            optimalGrid.innerHTML = '';
+            
+            optimalRatios.forEach((ratio, idx) => {
+                // C = 6 × non_embedding_params × tokens
+                // tokens = ratio × non_embedding_params
+                // C = 6 × non_embedding_params × (ratio × non_embedding_params)
+                // C = 6 × ratio × non_embedding_params²
+                const nonEmbeddingParams = Math.sqrt(targetFlops / (6 * ratio));
+                const tokens = ratio * nonEmbeddingParams;
+                
+                // Estimate total params (add typical embedding size based on model scale)
+                // Assume typical hidden dims: 500M->1024, 1B->2048, 7B->4096, 13B->5120, etc.
+                let estimatedHiddenDim;
+                if (nonEmbeddingParams < 700e6) estimatedHiddenDim = 1024;
+                else if (nonEmbeddingParams < 2e9) estimatedHiddenDim = 2048;
+                else if (nonEmbeddingParams < 7e9) estimatedHiddenDim = 4096;
+                else if (nonEmbeddingParams < 30e9) estimatedHiddenDim = 5120;
+                else estimatedHiddenDim = 8192;
+                
+                const estimatedEmbedding = VOCAB_SIZE * estimatedHiddenDim; // Assume tied for estimate
+                const totalParams = nonEmbeddingParams + estimatedEmbedding;
+                
+                const configDiv = document.createElement('div');
+                configDiv.className = 'config-item';
+                configDiv.innerHTML = `
+                    <div class="config-main">
+                        <div class="config-value">
+                            <div class="config-label">${optimalLabels[idx]}</div>
+                            <div class="config-number">${formatNumber(nonEmbeddingParams)}</div>
+                            <div class="config-label">Non-Emb Params</div>
+                        </div>
+                        <div class="config-value">
+                            <div class="config-label">&nbsp;</div>
+                            <div class="config-number">~${formatNumber(totalParams)}</div>
+                            <div class="config-label">Total Params</div>
+                        </div>
+                        <div class="config-value">
+                            <div class="config-label">&nbsp;</div>
+                            <div class="config-number">${formatNumber(tokens)}</div>
+                            <div class="config-label">Tokens</div>
+                        </div>
+                    </div>
+                    <div class="config-hyperparams">
+                        <div class="config-value">
+                            <div class="config-label">Learning Rate</div>
+                            <div class="config-number">${optimalLR.toExponential(2)}</div>
+                        </div>
+                        <div class="config-value">
+                            <div class="config-label">Batch Size</div>
+                            <div class="config-number">${formatNumber(optimalBatch)}</div>
+                        </div>
+                    </div>
+                `;
+                optimalGrid.appendChild(configDiv);
+            });
+            
+            // Calculate custom ratio configurations
+            const tokenRatiosInput = document.getElementById('tokenRatios').value;
+            const customRatios = tokenRatiosInput.split(',').map(s => parseFloat(s.trim())).filter(r => r > 0);
+            
+            const customGrid = document.getElementById('customConfigsGrid');
+            customGrid.innerHTML = '';
+            
+            customRatios.forEach(ratio => {
+                const nonEmbeddingParams = Math.sqrt(targetFlops / (6 * ratio));
+                const tokens = ratio * nonEmbeddingParams;
+                
+                // Estimate total params
+                let estimatedHiddenDim;
+                if (nonEmbeddingParams < 700e6) estimatedHiddenDim = 1024;
+                else if (nonEmbeddingParams < 2e9) estimatedHiddenDim = 2048;
+                else if (nonEmbeddingParams < 7e9) estimatedHiddenDim = 4096;
+                else if (nonEmbeddingParams < 30e9) estimatedHiddenDim = 5120;
+                else estimatedHiddenDim = 8192;
+                
+                const estimatedEmbedding = VOCAB_SIZE * estimatedHiddenDim; // Assume tied for estimate
+                const totalParams = nonEmbeddingParams + estimatedEmbedding;
+                
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                card.innerHTML = `
+                    <div class="model-size">${ratio}:1 Ratio</div>
+                    <div class="tokens-value">${formatNumber(nonEmbeddingParams)}</div>
+                    <div class="tokens-label">Non-Embedding Params</div>
+                    <div style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
+                        Total: ~${formatNumber(totalParams)}
+                    </div>
+                    <div class="comparison">
+                        <div class="comparison-item">
+                            <span class="comparison-label">Training Tokens:</span>
+                            <span class="comparison-value">${formatNumber(tokens)}</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span class="comparison-label">Tokens/Param:</span>
+                            <span class="comparison-value">${ratio}</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span class="comparison-label">Total FLOPs:</span>
+                            <span class="comparison-value">${formatFlops(targetFlops)}</span>
+                        </div>
+                    </div>
+                    <div class="hyperparams-section">
+                        <div class="hyperparam-row">
+                            <span class="hyperparam-label">Learning Rate:</span>
+                            <span class="hyperparam-value">${optimalLR.toExponential(2)}</span>
+                        </div>
+                        <div class="hyperparam-row">
+                            <span class="hyperparam-label">Batch Size:</span>
+                            <span class="hyperparam-value">${formatNumber(optimalBatch)}</span>
+                        </div>
+                    </div>
+                `;
+                customGrid.appendChild(card);
+            });
+        }
+        
+        // Event listeners for Mode 1
+        document.getElementById('baseParams').addEventListener('input', calculateMode1);
+        document.getElementById('baseTokens').addEventListener('input', calculateMode1);
+        document.getElementById('hiddenDim').addEventListener('input', calculateMode1);
+        document.getElementById('tiedEmbeddings').addEventListener('change', calculateMode1);
+        document.getElementById('modelSizes').addEventListener('input', calculateMode1);
+        
+        // Event listeners for Mode 2
+        document.getElementById('targetFlops').addEventListener('input', calculateMode2);
+        document.getElementById('tokenRatios').addEventListener('input', calculateMode2);
+        
+        // Initial calculation
+        calculateMode1();
+    </script>
+</body>
+</html>
