@@ -791,7 +791,7 @@
                             ${highlyDivisible.map((option, idx) => {
                                 // Calculate valid micro batch sizes for nodes 3-10
                                 let microBatchInfo = [];
-                                for (let nodes = 3; nodes <= 10; nodes++) {
+                                for (let nodes = 3; nodes <= 16; nodes++) {
                                     if (option.validNodes.includes(nodes)) {
                                         const seqPerGPU = option.sequences / (nodes * 8);
                                         // Find divisors of seqPerGPU (these are valid micro batch sizes)
